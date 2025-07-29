@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - PYTHONUNBUFFERED=1
+    command: >
+      sh -c "
+        echo 'Running migrations...' &&
+        python manage.py makemigrations ledger --noinput &&
+        python manage.py migrate --noinput &&
+        echo 'Initializing test data...' &&
+        python init_data.py || true &&
+        echo 'Starting Django server...' &&
+        python manage.py runserver 0.0.0.0:8000
+      "
+    networks:
+      - ledger-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      - VUE_APP_API_URL=http://backend:8000
+    depends_on:
+      - backend
+    networks:
+      - ledger-network
+
+networks:
+  ledger-network:
+    driver: bridge

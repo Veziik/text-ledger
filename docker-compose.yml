@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+      - ./requirements.txt:/app/requirements.txt
+    environment:
+      - PYTHONUNBUFFERED=1
+    command: bash -c "chmod +x /app/start.sh && /app/start.sh"
+    networks:
+      - ledger-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    environment:
+      - VUE_APP_API_URL=http://backend:8000
+    depends_on:
+      - backend
+    networks:
+      - ledger-network
+
+networks:
+  ledger-network:
+    driver: bridge
